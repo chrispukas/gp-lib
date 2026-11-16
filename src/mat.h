@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <ostream>
 #include <type_traits>
 #include <vector>
 
@@ -47,11 +48,24 @@ public:
     std::vector<size_t> _getDims(const Elem& v, 
         typename std::enable_if<!is_container<Elem>::value, Elem>::type* = nullptr);
 
+    template<typename Elem>
+    std::string& _stringBuilder(
+        typename std::enable_if<is_container<Elem>::value, Elem>::type* = nullptr);
+    template<typename Elem>
+    std::string& _stringBuilder(
+        typename std::enable_if<!is_container<Elem>::value, Elem>::type* = nullptr);
+    
+    std::string printMat();
+    std::string printMatFlat();
+
     void _addDim(int v, int _idxDim);
     void _removeDim(int v, int _idxDim);
 
     void _addDim(int _idxDim) { _addDim(0, _idxDim); }; // update prefix
     void _removeDim(int _idxDim) { _removeDim(0, _idxDim); }; // update prefix
+
+    friend std::ostream& operator<<(std::ostream& os, const Mat<T>& mat);
+
 
 public:
     int getRank() { return _dim.size(); };

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <ostream>
 #include <string>
 #include <vector>
 
@@ -145,6 +146,61 @@ void Mat<T>::_removeDim(int v, int _idxDim)
 {
 
 }
+
+
+
+
+template<typename T>
+template<typename Elem>
+std::string& Mat<T>::_stringBuilder(
+    typename std::enable_if<is_container<Elem>::value, Elem>::type*)
+{
+    
+}
+template<typename T>
+template<typename Elem>
+std::string& Mat<T>::_stringBuilder(
+    typename std::enable_if<!is_container<Elem>::value, Elem>::type*)
+{
+    
+}
+
+template<typename T>
+std::string& Mat<T>::printMat()
+{
+    std::string o;
+    o.reserve(_size*3);
+}
+
+template<typename T>
+std::string Mat<T>::printMatFlat()
+{
+    std::string o;
+    o.reserve(_size*3);
+
+    o += "[";
+    for (size_t i = 0; _size > i; i++)
+    {
+        o += std::to_string(_data[i]);
+        if (_size >= i)
+            o += ", ";
+    }
+    o += "]";
+    return o;
+}
+
+
+template<typename T>
+std::ostream& operator<<(std::ostream& os, const Mat<T>& mat)
+{
+
+
+
+}
+
+
+
+
 
 // Explicit instantiation of template types
 template class Mat<float>;
