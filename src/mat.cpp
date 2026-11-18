@@ -1,8 +1,10 @@
 #include "mat.h"
+#include "stringbuilder.h"
 
 #include <algorithm>
 #include <cstddef>
 #include <ostream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -60,7 +62,7 @@ template<typename T>
 template<typename Elem>
 std::vector<T> Mat<T>::_flatten(const Elem& v)
 {
-    std::vector<T> o(_getFlatSize(), static_cast<T>(0.));
+    std::vector<T> o(_size, static_cast<T>(0.));
     std::vector<size_t> idx{};
     
     _flattenHelper(v, o, idx);
@@ -166,36 +168,61 @@ std::string& Mat<T>::_stringBuilder(
 }
 
 template<typename T>
-std::string& Mat<T>::printMat()
-{
-    std::string o;
-    o.reserve(_size*3);
-}
-
-template<typename T>
-std::string Mat<T>::printMatFlat()
+std::string Mat<T>::printMat()
 {
     std::string o;
     o.reserve(_size*3);
 
-    o += "[";
-    for (size_t i = 0; _size > i; i++)
-    {
-        o += std::to_string(_data[i]);
-        if (_size >= i)
-            o += ", ";
-    }
-    o += "]";
     return o;
 }
 
-
 template<typename T>
-std::ostream& operator<<(std::ostream& os, const Mat<T>& mat)
+std::ostream& operator<<(std::ostream& l, const Mat<T>& r)
 {
 
 
 
+}
+
+template<typename T>
+Mat<T> Mat<T>::_add(const Mat<T>& l, const Mat<T>& r)
+{
+    // following improvements needed:
+    // 1. checks for type of l, and r (maybe some type promotion would be interesting?).
+
+    if (!Mat::_verifyShapeCompatability(l, r))
+        throw std::out_of_range("Incorrect shapes of matricies to be added! m1.dim: " + 
+            vecToString(l._dim) + ", m2.dim: " + vecToString(r._dim) + "\n");
+
+    Mat<T> m;
+    m._like(l); // creates matrix of like shape, elems of 0
+
+    for (size_t i = 0; i < l._size; i++)
+        m._data[i] = l._data[i] + r._data[i];
+
+    return m;
+} 
+
+
+
+
+
+
+
+
+// Statics
+template<typename T>
+bool Mat<T>::_verifyShapeCompatability(const Mat<T>& l, const Mat<T>& r)
+{
+    if (l._size != r._size || l._dim.size() != r._dim.size())
+        return false;
+    for (int idx_dim = 0; l._dim.size() > idx_dim; idx_dim++)
+    {
+        if (l._dim[idx_dim] != r._dim[idx_dim])
+            return false;
+    }
+
+    return true;
 }
 
 
