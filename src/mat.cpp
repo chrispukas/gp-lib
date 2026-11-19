@@ -70,9 +70,8 @@ std::vector<T> Mat<T>::_flatten(const Elem& v)
 }
 
 template<typename T>
-template<typename Elem> // Is at least 1-deep container.
-void Mat<T>::_flattenHelper(const Elem& v, std::vector<T>& h, std::vector<size_t>& idx,
-    typename std::enable_if<is_container<Elem>::value, Elem>::type*)
+template<typename Elem, if_container_t<Elem>> // Is at least 1-deep container.
+void Mat<T>::_flattenHelper(const Elem& v, std::vector<T>& h, std::vector<size_t>& idx)
 {
     if (v.empty())
         return;
@@ -85,33 +84,16 @@ void Mat<T>::_flattenHelper(const Elem& v, std::vector<T>& h, std::vector<size_t
 }
 
 template<typename T>
-template<typename Elem> // Is a primitive
-void Mat<T>::_flattenHelper(const Elem& v, std::vector<T>& h, std::vector<size_t>& idx, 
-    typename std::enable_if<std::is_same<Elem, T>::value, Elem>::type*)
+template<typename Elem, if_not_container_t<Elem>>
+void Mat<T>::_flattenHelper(const Elem& v, std::vector<T>& h, std::vector<size_t>& idx)
 {
     _setAddress(idx, v);
 }
 
 
 template<typename T>
-bool Mat<T>::_verifyMat(const std::vector<size_t>& v1, const std::vector<size_t>& v2)
-{
-    if (v1.size() != v2.size())
-        return false;
-
-    for (size_t j {0}; v1.size() > j; j++)
-    {
-        if (v1[j] != v2[j])
-            return false;
-    }
-
-    return true;
-}
-
-template<typename T>
-template<typename Elem>
-std::vector<size_t> Mat<T>::_getDims(const Elem& v, 
-    typename std::enable_if<is_container<Elem>::value, Elem>::type*)
+template<typename Elem, if_container_t<Elem>>
+std::vector<size_t> Mat<T>::_getDims(const Elem& v)
 {
     if (v.size() == 0)
         return std::vector<size_t>{};
@@ -121,7 +103,7 @@ std::vector<size_t> Mat<T>::_getDims(const Elem& v,
     {
         // Proposed dimensions of new layer
         std::vector<size_t> sub {_getDims(v[i])};
-        if (!_verifyMat(o, sub))
+        if (!_verifyShapeCompatability(o, sub))
             return std::vector<size_t>{};        
     }
 
@@ -130,9 +112,8 @@ std::vector<size_t> Mat<T>::_getDims(const Elem& v,
 }
 
 template<typename T>
-template<typename Elem>
-std::vector<size_t> Mat<T>::_getDims(const Elem& v, 
-    typename std::enable_if<!is_container<Elem>::value, Elem>::type*)
+template<typename Elem, if_not_container_t<Elem>>
+std::vector<size_t> Mat<T>::_getDims(const Elem& v)
 {
     return std::vector<size_t>{};
 }
@@ -153,16 +134,14 @@ void Mat<T>::_removeDim(int v, int _idxDim)
 
 
 template<typename T>
-template<typename Elem>
-std::string& Mat<T>::_stringBuilder(
-    typename std::enable_if<is_container<Elem>::value, Elem>::type*)
+template<typename Elem, if_container_t<Elem>>
+std::string& Mat<T>::_stringBuilder()
 {
     
 }
 template<typename T>
-template<typename Elem>
-std::string& Mat<T>::_stringBuilder(
-    typename std::enable_if<!is_container<Elem>::value, Elem>::type*)
+template<typename Elem, if_not_container_t<Elem>>
+std::string& Mat<T>::_stringBuilder()
 {
     
 }
@@ -176,20 +155,16 @@ std::string Mat<T>::printMat()
     return o;
 }
 
-template<typename T>
-std::ostream& operator<<(std::ostream& l, const Mat<T>& r)
+template<typename T, typename Elem>
+std::ostream& operator<<(std::ostream& os, const Mat<T>& v)
 {
-
-
-
+    return os << v.template _stringBuilder<Elem>();
 }
 
 template<typename T>
-Mat<T> Mat<T>::_add(const Mat<T>& l, const Mat<T>& r)
+template<typename Op>
+Mat<T> Mat<T>::_elementWise(const Mat<T>& l, const Mat<T>& r)
 {
-    // following improvements needed:
-    // 1. checks for type of l, and r (maybe some type promotion would be interesting?).
-
     if (!Mat::_verifyShapeCompatability(l, r))
         throw std::out_of_range("Incorrect shapes of matricies to be added! m1.dim: " + 
             vecToString(l._dim) + ", m2.dim: " + vecToString(r._dim) + "\n");
@@ -198,35 +173,33 @@ Mat<T> Mat<T>::_add(const Mat<T>& l, const Mat<T>& r)
     m._like(l); // creates matrix of like shape, elems of 0
 
     for (size_t i = 0; i < l._size; i++)
-        m._data[i] = l._data[i] + r._data[i];
+        m._data[i] = Op{}(l._data[i], r._data[i]);
 
     return m;
-} 
-
-
-
-
-
-
-
+}
 
 // Statics
 template<typename T>
 bool Mat<T>::_verifyShapeCompatability(const Mat<T>& l, const Mat<T>& r)
 {
-    if (l._size != r._size || l._dim.size() != r._dim.size())
+    if (l._size != r._size)
         return false;
-    for (int idx_dim = 0; l._dim.size() > idx_dim; idx_dim++)
+    return _verifyShapeCompatability(l._dim, r._dim);
+}
+
+template<typename T>
+bool Mat<T>::_verifyShapeCompatability(const std::vector<T>& l, const std::vector<T>& r)
+{
+    if (l.size() != r.size())
+        return false;
+    for (int idx_dim = 0; l.size() > idx_dim; idx_dim++)
     {
-        if (l._dim[idx_dim] != r._dim[idx_dim])
+        if (l[idx_dim] != r[idx_dim])
             return false;
     }
 
     return true;
 }
-
-
-
 
 
 // Explicit instantiation of template types
