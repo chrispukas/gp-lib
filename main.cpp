@@ -1,6 +1,9 @@
-#include <cstddef>
+#include <iostream>
+#include <string>
 #include <vector>
-#include "mat.h"
+
+#include "mat.hpp"
+#include "stringbuilder.hpp"
 
 
 
@@ -13,6 +16,10 @@ int main()
         };;
 
     Mat<float>* mat = new Mat<float>{vec};
+    std::cout << mat->_data.size() << " " << mat->_dim.size() << "\n";
+    std::cout << vecToString(mat->_dim) << "\n";
+    std::cout << vecToString(Mat<float>::_getDims(vec)) << "\n";
+    std::cout << Mat<float>::_getDims(vec).size();
 
     delete mat;
 

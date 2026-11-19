@@ -14,7 +14,7 @@ std::string vecToString(const std::vector<T>& v)
     for (size_t i = 0; len > i; i++)
     {
         o += std::to_string(v[i]);
-        if (len >= i)
+        if (len-1 > i)
             o += ", ";
     }
     o += "]";
